@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:news_app/modal/newsmodal.dart';
@@ -16,61 +15,30 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final NewsService _newsService = NewsService();
 
-  late Future<List<NewsArticle>> _breakingNewsFuture;
-  late Future<List<NewsArticle>> _recommendationsFuture;
+  late Future<Map<String, List<NewsArticle>>> _newsDataFuture;
 
   int _selectedIndex = 0;
-
-  // Lists of available countries and categories
-  final List<String> _categories = [
-    "business",
-    "technology",
-    "sports",
-    "general",
-    "health",
-    "science",
-    "entertainment"
-  ];
-  final List<String> _countries = ["us", "in", "fr", "ru", "au", "gb"];
-
-  String _selectedCategory = "";
-  String _selectedCountry = "";
 
   @override
   void initState() {
     super.initState();
+    _initializeNewsData();
+  }
 
-    // Randomly select a category and country
-    final Random random = Random();
-    _selectedCategory = _categories[random.nextInt(_categories.length)];
-    _selectedCountry = _countries[random.nextInt(_countries.length)];
-
-    // Fetch breaking news and recommendations based on the selected category and country
-    _breakingNewsFuture =
-        _newsService.fetchBreakingNews(_selectedCountry); // Updated method
-    _recommendationsFuture = _newsService.fetchRecommendations(
-        _selectedCategory, _selectedCountry); // Updated method
+  void _initializeNewsData() {
+    // Call fetchRandomNews for both sections
+    _newsDataFuture = Future.wait([
+      _newsService.fetchRandomNews(), // For breaking news
+      _newsService.fetchRandomNews(), // For recommendations
+    ]).then((results) => {
+          "breakingNews": results[0],
+          "recommendations": results[1],
+        });
   }
 
   Future<void> _refreshData() async {
     setState(() {
-      // Randomly select a category and country when refreshing data
-      final Random random = Random();
-      _selectedCategory = _categories[random.nextInt(_categories.length)];
-      _selectedCountry = _countries[random.nextInt(_countries.length)];
-
-      _breakingNewsFuture =
-          _newsService.fetchBreakingNews(_selectedCountry); // Updated method
-      _recommendationsFuture = _newsService.fetchRecommendations(
-          _selectedCategory, _selectedCountry); // Updated method
-    });
-  }
-
-  void _onCategorySelected(String category) {
-    setState(() {
-      _selectedCategory = category;
-      _recommendationsFuture = _newsService.fetchRecommendations(
-          category.toLowerCase(), _selectedCountry); // Updated method
+      _initializeNewsData();
     });
   }
 
@@ -85,36 +53,45 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: _buildAppBar(),
       body: RefreshIndicator(
-        onRefresh: _refreshData, // Full-screen refresh
+        onRefresh: _refreshData,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSectionHeader(
-                  title: "Breaking News",
-                  onViewAllPressed: () => debugPrint("View All pressed"),
-                ),
-                const SizedBox(height: 16),
-                _buildFutureBuilder(
-                  future: _breakingNewsFuture,
-                  builder: (context, articles) =>
-                      _buildCarouselSlider(articles),
-                ),
-                const SizedBox(height: 16),
-                _buildSectionHeader(
-                  title: "Recommendation",
-                  onViewAllPressed: () => debugPrint("View All pressed"),
-                ),
-                const SizedBox(height: 8),
-                _buildFutureBuilder(
-                  future: _recommendationsFuture,
-                  builder: (context, articles) =>
-                      _buildRecommendationList(articles),
-                ),
-              ],
+            child: FutureBuilder<Map<String, List<NewsArticle>>>(
+              future: _newsDataFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text("Error: ${snapshot.error}"));
+                } else if (snapshot.hasData) {
+                  final breakingNews = snapshot.data?["breakingNews"] ?? [];
+                  final recommendations =
+                      snapshot.data?["recommendations"] ?? [];
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionHeader(
+                        title: "Breaking News",
+                        onViewAllPressed: () => debugPrint("View All pressed"),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildCarouselSlider(breakingNews),
+                      const SizedBox(height: 16),
+                      _buildSectionHeader(
+                        title: "Recommendations",
+                        onViewAllPressed: () => debugPrint("View All pressed"),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildRecommendationList(recommendations),
+                    ],
+                  );
+                } else {
+                  return const Center(child: Text("No data available."));
+                }
+              },
             ),
           ),
         ),
@@ -311,113 +288,117 @@ class _HomePageState extends State<HomePage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => FullNewsPage(imageUrl: article.imageUrl, title: article.title, description: article.description, content: article.content),
+            builder: (context) => FullNewsPage(
+                imageUrl: article.imageUrl,
+                title: article.title,
+                description: article.description,
+                content: article.content),
           ),
         );
       },
       child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: article.urlToImage.isNotEmpty
-                    ? Image.network(
-                        article.urlToImage,
-                        width: 150,
-                        height: 100,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 150,
-                            height: 100,
-                            color: Colors
-                                .grey[200], // Placeholder background color
-                            child: const Center(
-                              child: Icon(
-                                Icons.broken_image,
-                                size: 50,
-                                color: Colors.grey,
-                              ),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: article.urlToImage.isNotEmpty
+                  ? Image.network(
+                      article.urlToImage,
+                      width: 150,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 150,
+                          height: 100,
+                          color:
+                              Colors.grey[200], // Placeholder background color
+                          child: const Center(
+                            child: Icon(
+                              Icons.broken_image,
+                              size: 50,
+                              color: Colors.grey,
                             ),
-                          );
-                        },
-                      )
-                    : Container(
-                        width: 150,
-                        height: 100,
-                        color: Colors.grey[200], // Placeholder background color
-                        child: const Center(
-                          child: Icon(
-                            Icons.broken_image,
-                            size: 50,
-                            color: Colors.grey,
                           ),
+                        );
+                      },
+                    )
+                  : Container(
+                      width: 150,
+                      height: 100,
+                      color: Colors.grey[200], // Placeholder background color
+                      child: const Center(
+                        child: Icon(
+                          Icons.broken_image,
+                          size: 50,
+                          color: Colors.grey,
                         ),
                       ),
+                    ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    article.sourceName,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    article.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 10,
+                        backgroundColor: Colors.grey[300],
+                        child: const Icon(Icons.person,
+                            size: 14, color: Colors.white),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          article.author.isNotEmpty == true
+                              ? article.author
+                              : "Unknown",
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          article.publishedAt?.toString() ?? "N/A",
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      article.sourceName,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.blue,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      article.title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 10,
-                          backgroundColor: Colors.grey[300],
-                          child: const Icon(Icons.person,
-                              size: 14, color: Colors.white),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            article.author.isNotEmpty == true
-                                ? article.author
-                                : "Unknown",
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.grey),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 2,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            article.publishedAt?.toString() ?? "N/A",
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.grey),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
     );
   }
 
