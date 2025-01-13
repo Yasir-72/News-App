@@ -155,14 +155,7 @@ class _HomePageState extends State<HomePage> {
           title,
           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
-        TextButton(
-          onPressed: onViewAllPressed,
-          child: const Text("View All",
-              style: TextStyle(
-                  color: Colors.blue,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold)),
-        ),
+    IconButton(onPressed: (){}, icon: Icon(Icons.new_releases)),
       ],
     );
   }
@@ -418,7 +411,7 @@ class _HomePageState extends State<HomePage> {
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.bookmark),
-          label: "Bookmarks",
+          label: "Saved",
         ),
       ],
     );

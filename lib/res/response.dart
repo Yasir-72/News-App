@@ -71,7 +71,7 @@ class NewsService {
       "science",
       "entertainment"
     ];
-    List<String> countries = ["us", "in", "fr", "au"];
+    List<String> countries = ["us", "in","au"];
 
     // Select a random category and country
     String randomCategory = (categories..shuffle()).first;
@@ -82,4 +82,13 @@ class NewsService {
         'top-headlines/category/$randomCategory/$randomCountry.json';
     return _fetchNews(endpoint);
   }
+
+   Future<List<NewsArticle>> fetchNewsWithCategory(String selectedCategory) async {
+    List<String> countries = ["us", "in", "au"];
+    String randomCountry = (countries..shuffle()).first;
+
+    String endpoint = 'top-headlines/category/$selectedCategory/$randomCountry.json';
+    return _fetchNews(endpoint);
+  }
 } 
+
