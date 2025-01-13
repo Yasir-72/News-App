@@ -4,6 +4,7 @@ import 'package:news_app/modal/newsmodal.dart';
 import 'package:news_app/res/response.dart';
 import 'package:news_app/view/screens/explorepage.dart';
 import 'package:news_app/view/screens/fullnewspage.dart';
+import 'package:news_app/view/screens/savedpage.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -16,7 +17,6 @@ class _HomePageState extends State<HomePage> {
   final NewsService _newsService = NewsService();
 
   late Future<Map<String, List<NewsArticle>>> _newsDataFuture;
-
   int _selectedIndex = 0;
 
   @override
@@ -41,6 +41,12 @@ class _HomePageState extends State<HomePage> {
       _initializeNewsData();
     });
   }
+
+  final List<Widget> _pages = [
+    const HomePage(), // Home page widget
+    const ExplorePage(), // Navigate to Explore Page
+    const SavedPage(),   // Saved Page
+  ];
 
   void _onBottomNavTapped(int index) {
     setState(() {
@@ -67,8 +73,7 @@ class _HomePageState extends State<HomePage> {
                   return Center(child: Text("Error: ${snapshot.error}"));
                 } else if (snapshot.hasData) {
                   final breakingNews = snapshot.data?["breakingNews"] ?? [];
-                  final recommendations =
-                      snapshot.data?["recommendations"] ?? [];
+                  final recommendations = snapshot.data?["recommendations"] ?? [];
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,35 +116,15 @@ class _HomePageState extends State<HomePage> {
         IconButton(
           icon: const Icon(Icons.search, size: 35),
           onPressed: () => Navigator.push(
-              context, MaterialPageRoute(builder: (context) => ExplorePage())),
+            context,
+            MaterialPageRoute(builder: (context) => const ExplorePage()),
+          ),
         ),
         IconButton(
           icon: const Icon(Icons.notifications_active, size: 35),
           onPressed: () {},
         ),
       ],
-    );
-  }
-
-  // FutureBuilder for loading data with optimized error handling
-  Widget _buildFutureBuilder({
-    required Future<List<NewsArticle>> future,
-    required Widget Function(BuildContext context, List<NewsArticle> articles)
-        builder,
-  }) {
-    return FutureBuilder<List<NewsArticle>>(
-      future: future,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text("Error: ${snapshot.error}"));
-        } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-          return builder(context, snapshot.data!);
-        } else {
-          return const Center(child: Text("No data available."));
-        }
-      },
     );
   }
 
@@ -155,7 +140,7 @@ class _HomePageState extends State<HomePage> {
           title,
           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
-    IconButton(onPressed: (){}, icon: Icon(Icons.new_releases)),
+        IconButton(onPressed: onViewAllPressed, icon: const Icon(Icons.new_releases)),
       ],
     );
   }
@@ -207,11 +192,9 @@ class _HomePageState extends State<HomePage> {
                 return Container(
                   width: double.infinity,
                   height: double.infinity,
-                  color:
-                      Colors.grey[200], // Background color for the error state
+                  color: Colors.grey[200], // Background color for the error state
                   child: const Center(
-                    child:
-                        Icon(Icons.broken_image, size: 50, color: Colors.red),
+                    child: Icon(Icons.broken_image, size: 50, color: Colors.red),
                   ),
                 );
               },
@@ -263,8 +246,9 @@ class _HomePageState extends State<HomePage> {
 
   // Recommendation list widget
   Widget _buildRecommendationList(List<NewsArticle> articles) {
-    return ListView.builder(
+    return ListView.separated(
       shrinkWrap: true,
+      separatorBuilder: (context, index) => const Divider(),
       physics: const NeverScrollableScrollPhysics(),
       itemCount: articles.length,
       itemBuilder: (context, index) {
@@ -282,10 +266,11 @@ class _HomePageState extends State<HomePage> {
           context,
           MaterialPageRoute(
             builder: (context) => FullNewsPage(
-                imageUrl: article.imageUrl,
-                title: article.title,
-                description: article.description,
-                content: article.content),
+              imageUrl: article.urlToImage,
+              title: article.title,
+              description: article.description,
+              content: article.content,
+            ),
           ),
         );
       },
@@ -305,8 +290,7 @@ class _HomePageState extends State<HomePage> {
                         return Container(
                           width: 150,
                           height: 100,
-                          color:
-                              Colors.grey[200], // Placeholder background color
+                          color: Colors.grey[200],
                           child: const Center(
                             child: Icon(
                               Icons.broken_image,
@@ -320,7 +304,7 @@ class _HomePageState extends State<HomePage> {
                   : Container(
                       width: 150,
                       height: 100,
-                      color: Colors.grey[200], // Placeholder background color
+                      color: Colors.grey[200],
                       child: const Center(
                         child: Icon(
                           Icons.broken_image,
@@ -365,11 +349,10 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          article.author.isNotEmpty == true
+                          article.author.isNotEmpty
                               ? article.author
                               : "Unknown",
-                          style:
-                              const TextStyle(fontSize: 12, color: Colors.grey),
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2,
                         ),
@@ -378,8 +361,7 @@ class _HomePageState extends State<HomePage> {
                       Expanded(
                         child: Text(
                           article.publishedAt?.toString() ?? "N/A",
-                          style:
-                              const TextStyle(fontSize: 12, color: Colors.grey),
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         ),

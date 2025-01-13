@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:news_app/modal/newsmodal.dart';
 import 'package:news_app/res/response.dart';
-import 'package:news_app/view/screens/fullnewspage.dart'; 
+import 'package:news_app/view/screens/fullnewspage.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({Key? key}) : super(key: key);
@@ -55,7 +55,7 @@ class _ExplorePageState extends State<ExplorePage> {
 
   Widget _buildCategoryChips() {
     List<String> categories = [
-      "all", 
+      "all",
       "business",
       "technology",
       "sports",
