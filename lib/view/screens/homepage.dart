@@ -4,7 +4,6 @@ import 'package:news_app/modal/newsmodal.dart';
 import 'package:news_app/res/response.dart';
 import 'package:news_app/view/screens/explorepage.dart';
 import 'package:news_app/view/screens/fullnewspage.dart';
-import 'package:news_app/view/screens/savedpage.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -17,7 +16,6 @@ class _HomePageState extends State<HomePage> {
   final NewsService _newsService = NewsService();
 
   late Future<Map<String, List<NewsArticle>>> _newsDataFuture;
-  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -42,18 +40,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  final List<Widget> _pages = [
-    const HomePage(), // Home page widget
-    const ExplorePage(), // Navigate to Explore Page
-    const SavedPage(),   // Saved Page
-  ];
-
-  void _onBottomNavTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,7 +59,8 @@ class _HomePageState extends State<HomePage> {
                   return Center(child: Text("Error: ${snapshot.error}"));
                 } else if (snapshot.hasData) {
                   final breakingNews = snapshot.data?["breakingNews"] ?? [];
-                  final recommendations = snapshot.data?["recommendations"] ?? [];
+                  final recommendations =
+                      snapshot.data?["recommendations"] ?? [];
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,7 +88,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
@@ -140,7 +126,8 @@ class _HomePageState extends State<HomePage> {
           title,
           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
-        IconButton(onPressed: onViewAllPressed, icon: const Icon(Icons.new_releases)),
+        IconButton(
+            onPressed: onViewAllPressed, icon: const Icon(Icons.new_releases)),
       ],
     );
   }
@@ -164,49 +151,63 @@ class _HomePageState extends State<HomePage> {
 
   // Carousel item widget
   Widget _buildCarouselItem(NewsArticle article) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 5),
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.network(
-              article.urlToImage,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) {
-                  return child; // Image has finished loading
-                }
-                return Center(
-                  child: CircularProgressIndicator(
-                    value: loadingProgress.expectedTotalBytes != null
-                        ? loadingProgress.cumulativeBytesLoaded /
-                            (loadingProgress.expectedTotalBytes ?? 1)
-                        : null,
-                  ),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: double.infinity,
-                  height: double.infinity,
-                  color: Colors.grey[200], // Background color for the error state
-                  child: const Center(
-                    child: Icon(Icons.broken_image, size: 50, color: Colors.red),
-                  ),
-                );
-              },
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => FullNewsPage(
+                    imageUrl: article.imageUrl,
+                    title: article.title,
+                    description: article.description,
+                    content: article.content)));
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 5),
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(
+                article.urlToImage,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) {
+                    return child; // Image has finished loading
+                  }
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              (loadingProgress.expectedTotalBytes ?? 1)
+                          : null,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    color: Colors
+                        .grey[200], // Background color for the error state
+                    child: const Center(
+                      child:
+                          Icon(Icons.broken_image, size: 50, color: Colors.red),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-          Positioned(
-            bottom: 16,
-            left: 16,
-            right: 16,
-            child: _buildCarouselTextOverlay(article),
-          ),
-        ],
+            Positioned(
+              bottom: 16,
+              left: 16,
+              right: 16,
+              child: _buildCarouselTextOverlay(article),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -352,7 +353,8 @@ class _HomePageState extends State<HomePage> {
                           article.author.isNotEmpty
                               ? article.author
                               : "Unknown",
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2,
                         ),
@@ -361,7 +363,8 @@ class _HomePageState extends State<HomePage> {
                       Expanded(
                         child: Text(
                           article.publishedAt?.toString() ?? "N/A",
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         ),
@@ -374,28 +377,6 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-    );
-  }
-
-  // Bottom navigation bar widget
-  BottomNavigationBar _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: _onBottomNavTapped,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: "Home",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.explore),
-          label: "Explore",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.bookmark),
-          label: "Saved",
-        ),
-      ],
     );
   }
 }

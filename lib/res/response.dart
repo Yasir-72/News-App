@@ -83,12 +83,13 @@ class NewsService {
     return _fetchNews(endpoint);
   }
 
-   Future<List<NewsArticle>> fetchNewsWithCategory(String selectedCategory) async {
+  Future<List<NewsArticle>> fetchNewsWithCategory(
+      String selectedCategory) async {
     List<String> countries = ["us", "in", "fr", "au"];
     String randomCountry = (countries..shuffle()).first;
 
-    String endpoint = 'top-headlines/category/$selectedCategory/$randomCountry.json';
+    String endpoint =
+        'top-headlines/category/$selectedCategory/$randomCountry.json';
     return _fetchNews(endpoint);
   }
-} 
-
+}

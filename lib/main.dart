@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:news_app/view/screens/explorepage.dart';
-import 'package:news_app/view/screens/fullnewspage.dart';
-import 'package:news_app/view/screens/homepage.dart';
+import 'package:news_app/view/screens/bottomBar.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,7 +17,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: const BottomBar(),
     );
   }
 }

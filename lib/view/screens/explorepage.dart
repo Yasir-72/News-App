@@ -98,20 +98,22 @@ class _ExplorePageState extends State<ExplorePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 16),
-              _buildSearchBar(),
-              const SizedBox(height: 16),
-              Expanded(child: _buildNewsList()),
-            ],
+      // appBar: _buildAppBar(),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: _refreshData,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 16),
+                _buildSearchBar(),
+                const SizedBox(height: 16),
+                Expanded(child: _buildNewsList()),
+              ],
+            ),
           ),
         ),
       ),
