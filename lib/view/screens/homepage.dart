@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:news_app/modal/newsmodal.dart';
 import 'package:news_app/res/response.dart';
+import 'package:news_app/view/screens/drawer.dart';
 import 'package:news_app/view/screens/explorepage.dart';
 import 'package:news_app/view/screens/fullnewspage.dart';
 
@@ -88,15 +89,22 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
+      drawer: AppDrawer(),
     );
   }
 
   // AppBar widget
   AppBar _buildAppBar() {
     return AppBar(
-      leading: IconButton(
-        icon: const Icon(Icons.menu, size: 35),
-        onPressed: () => debugPrint("Menu pressed"),
+      leading: Builder(
+        builder: (context) {
+          return IconButton(
+            icon: const Icon(Icons.menu, size: 35),
+            onPressed: () {
+              Scaffold.of(context).openDrawer();
+            },
+          );
+        }
       ),
       actions: [
         IconButton(
@@ -126,8 +134,8 @@ class _HomePageState extends State<HomePage> {
           title,
           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
-        IconButton(
-            onPressed: onViewAllPressed, icon: const Icon(Icons.new_releases)),
+        // IconButton(
+        //     onPressed: onViewAllPressed, icon: const Icon(Icons.new_releases)),
       ],
     );
   }
