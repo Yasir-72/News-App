@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:news_app/view/screens/RejisterPage.dart';
 import 'package:news_app/view/screens/bottomBar.dart';
+import 'package:news_app/view/screens/loginpage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +19,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
       ),
-      home: const BottomBar(),
+      home: const RegisterPage(),
     );
   }
 }
