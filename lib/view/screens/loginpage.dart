@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:news_app/view/screens/RejisterPage.dart';
-import 'package:news_app/view/screens/homepage.dart';
+import 'package:news_app/view/screens/bottomBar.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -18,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isSubmitted = false;
 
   // Email Validation Function
   String? _validateEmail(String? value) {
@@ -57,14 +58,14 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Login Successfully"),
-          backgroundColor: Colors.green, 
+          backgroundColor: Colors.green,
         ),
       );
 
       // Navigate to HomePage on successful login
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomePage()),
+        MaterialPageRoute(builder: (context) => BottomBar()),
       );
     } catch (e) {
       String errorMessage = "Login Failed. Please try again.";
@@ -117,7 +118,8 @@ class _LoginPageState extends State<LoginPage> {
                   TextFormField(
                     controller: _emailController,
                     decoration: _inputDecoration("Email", Icons.email),
-                    validator: _validateEmail,
+                    validator: (value) =>
+                        _isSubmitted ? _validateEmail(value) : null,
                     keyboardType: TextInputType.emailAddress,
                   ),
                   SizedBox(height: 20),
@@ -126,18 +128,19 @@ class _LoginPageState extends State<LoginPage> {
                     controller: _passwordController,
                     obscureText: true, // Hide password
                     decoration: _inputDecoration("Password", Icons.lock),
-                    validator: _validatePassword,
+                    validator: ((value) =>
+                        _isSubmitted ? _validatePassword(value) : null),
                   ),
                   SizedBox(height: 20),
-                  GestureDetector(
-                    onTap: () {
-                      print("Forgot Password clicked");
-                    },
-                    child: Text(
-                      "Forgot Password?",
-                      style: TextStyle(color: Colors.blue),
-                    ),
-                  ),
+                  // GestureDetector(
+                  //   onTap: () {
+                  //     print("Forgot Password clicked");
+                  //   },
+                  //   // child: Text(
+                  //   //   "Forgot Password?",
+                  //   //   style: TextStyle(color: Colors.blue),
+                  //   // ),
+                  // ),
                   SizedBox(height: 40),
                   // Login Button
                   ElevatedButton(
