@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:news_app/view/screens/RejisterPage.dart';
 import 'package:news_app/view/screens/homepage.dart';
 
@@ -12,8 +13,11 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  bool _isLoading = false;
 
   // Email Validation Function
   String? _validateEmail(String? value) {
@@ -35,11 +39,57 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      // Navigate to Task Page on successful validation
+  // Login Function
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Firebase Authentication for Login
+      await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Login Successfully"),
+          backgroundColor: Colors.green, 
+        ),
+      );
+
+      // Navigate to HomePage on successful login
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => HomePage()));
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
+    } catch (e) {
+      String errorMessage = "Login Failed. Please try again.";
+
+      // Check specific error codes and display more specific messages
+      if (e.toString().contains('user-not-found')) {
+        errorMessage =
+            "No user found with this email. Please check your email.";
+      } else if (e.toString().contains('wrong-password')) {
+        errorMessage = "Incorrect password. Please try again.";
+      } else if (e.toString().contains('invalid-email')) {
+        errorMessage = "Invalid email format. Please enter a valid email.";
+      }
+
+      // Display a more specific error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage), // Optimized error message
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -53,6 +103,7 @@ class _LoginPageState extends State<LoginPage> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -90,7 +141,7 @@ class _LoginPageState extends State<LoginPage> {
                   SizedBox(height: 40),
                   // Login Button
                   ElevatedButton(
-                    onPressed: _submitForm,
+                    onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
@@ -100,13 +151,16 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       elevation: 5,
                     ),
-                    child: Text(
-                      'Login',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? Text("Login...",
+                            style: TextStyle(fontSize: 16, color: Colors.white))
+                        : Text(
+                            'Login',
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                          ),
                   ),
                   SizedBox(height: 15),
                   // Sign Up Navigation
@@ -137,23 +191,26 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-}
 
-InputDecoration _inputDecoration(String label, IconData icon) {
-  return InputDecoration(
-    labelText: label,
-    hintText: "Enter Password",
-    labelStyle: TextStyle(color: Colors.black),
-    prefixIcon: Icon( icon,color: Colors.black,),
-    filled: true,
-    fillColor: Colors.grey[200],
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(30),
-      borderSide: BorderSide.none,
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(30),
-      borderSide: BorderSide(color: Colors.grey, width: 2.0),
-    ),
-  );
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      hintText: "Enter $label",
+      labelStyle: TextStyle(color: Colors.black),
+      prefixIcon: Icon(
+        icon,
+        color: Colors.black,
+      ),
+      filled: true,
+      fillColor: Colors.grey[200],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30),
+        borderSide: BorderSide(color: Colors.grey, width: 2.0),
+      ),
+    );
+  }
 }
