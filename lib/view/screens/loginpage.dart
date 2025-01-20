@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:news_app/view/screens/RejisterPage.dart';
 import 'package:news_app/view/screens/bottomBar.dart';
 
@@ -19,6 +20,26 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _isLoading = false;
   bool _isSubmitted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUID(); // Check UID during initialization
+  }
+
+  // Check for UID in SharedPreferences
+  Future<void> _checkUID() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? uid = prefs.getString('uid');
+
+    if (uid != null && uid.isNotEmpty) {
+      // If UID exists, navigate to BottomBar
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => BottomBar()),
+      );
+    }
+  }
 
   // Email Validation Function
   String? _validateEmail(String? value) {
@@ -50,10 +71,14 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       // Firebase Authentication for Login
-      await _auth.signInWithEmailAndPassword(
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+
+      // Store UID in SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('uid', userCredential.user!.uid);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -62,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
 
-      // Navigate to HomePage on successful login
+      // Navigate to BottomBar on successful login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => BottomBar()),
@@ -83,7 +108,7 @@ class _LoginPageState extends State<LoginPage> {
       // Display a more specific error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(errorMessage), // Optimized error message
+          content: Text(errorMessage),
           backgroundColor: Colors.red,
         ),
       );
@@ -131,16 +156,6 @@ class _LoginPageState extends State<LoginPage> {
                     validator: ((value) =>
                         _isSubmitted ? _validatePassword(value) : null),
                   ),
-                  SizedBox(height: 20),
-                  // GestureDetector(
-                  //   onTap: () {
-                  //     print("Forgot Password clicked");
-                  //   },
-                  //   // child: Text(
-                  //   //   "Forgot Password?",
-                  //   //   style: TextStyle(color: Colors.blue),
-                  //   // ),
-                  // ),
                   SizedBox(height: 40),
                   // Login Button
                   ElevatedButton(
@@ -155,7 +170,7 @@ class _LoginPageState extends State<LoginPage> {
                       elevation: 5,
                     ),
                     child: _isLoading
-                        ? Text("Login...",
+                        ? Text("Logging...",
                             style: TextStyle(fontSize: 16, color: Colors.white))
                         : Text(
                             'Login',
@@ -181,7 +196,8 @@ class _LoginPageState extends State<LoginPage> {
                         },
                         child: Text(
                           "Sign Up",
-                          style: TextStyle(color: Colors.blue),
+                          style: TextStyle(
+                              color: Colors.blue, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],

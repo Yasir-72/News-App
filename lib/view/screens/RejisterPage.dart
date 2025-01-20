@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:news_app/view/screens/bottomBar.dart';
 import 'package:news_app/view/screens/loginpage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -24,6 +25,7 @@ class _RegisterPageState extends State<RegisterPage> {
   // Validation Logic
 
   bool _isSubmitted = false;
+  bool _isLoading = false;
 
   String? _validateName(String? value) {
     if (value == null || value.isEmpty) {
@@ -62,16 +64,62 @@ class _RegisterPageState extends State<RegisterPage> {
     return null;
   }
 
-  // Submit Form
-  // void _submitForm() {
-  //   setState(() {
-  //     _isSubmitted = true;
-  //   });
-  //   if (_formKey.currentState!.validate()) {
-  //     Navigator.pushReplacement(
-  //         context, MaterialPageRoute(builder: (context) => LoginPage()));
-  //   }
-  // }
+  Future<void> _Register() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+      try {
+        // Attempt to create a user with Firebase Authentication
+
+        await _auth.createUserWithEmailAndPassword(
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+
+        // Add user data to Firestore
+
+        // Display success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Account Created Successfully"),
+            backgroundColor: Colors.green, // Highlight success visually
+          ),
+        );
+
+        // Navigate to the LoginPage
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        );
+      } catch (e) {
+        String errorMessage =
+            "Register Failed. Please enter correct credential";
+
+        // Check specific error codes and display more specific messages
+        if (e.toString().contains('user-not-found')) {
+          errorMessage =
+              "No user found with this email. Please check your email.";
+        } else if (e.toString().contains('wrong-password')) {
+          errorMessage = "Incorrect password. Please try again.";
+        } else if (e.toString().contains('invalid-email')) {
+          errorMessage = "Invalid email format. Please enter a valid email.";
+        }
+
+        // Display a more specific error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage), // Optimized error message
+            backgroundColor: Colors.red,
+          ),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -133,48 +181,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                   // Register Button
                   ElevatedButton(
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        try {
-                          // Attempt to create a user with Firebase Authentication
-
-                          await _auth.createUserWithEmailAndPassword(
-                            email: _emailController.text,
-                            password: _passwordController.text,
-                          );
-
-                          // Add user data to Firestore
-
-                          // Display success message
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Account Created Successfully"),
-                              backgroundColor:
-                                  Colors.green, // Highlight success visually
-                            ),
-                          );
-
-                          // Navigate to the LoginPage
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => LoginPage()),
-                          );
-                        } catch (e) {
-                          // Display error message in Snackbar
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                "Failed to create account: ${e.toString()}", // Highlight specific error
-                              ),
-                              backgroundColor:
-                                  Colors.red, // Highlight error visually
-                            ),
-                          );
-                        }
-                      }
-                    },
-
+                    onPressed: _isLoading ? null : _Register,
                     // onPressed: _submitForm,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
@@ -185,7 +192,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     child: Text(
-                      'Register',
+                      _isLoading ? 'Register...' : 'Register',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
