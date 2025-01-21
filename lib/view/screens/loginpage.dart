@@ -19,7 +19,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _isLoading = false;
-  bool _isSubmitted = false;
 
   @override
   void initState() {
@@ -129,7 +128,8 @@ class _LoginPageState extends State<LoginPage> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Form(
               key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
+              autovalidateMode: AutovalidateMode
+                  .onUserInteraction, // Automatically validate during interaction
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -143,8 +143,8 @@ class _LoginPageState extends State<LoginPage> {
                   TextFormField(
                     controller: _emailController,
                     decoration: _inputDecoration("Email", Icons.email),
-                    validator: (value) =>
-                        _isSubmitted ? _validateEmail(value) : null,
+                    validator:
+                        _validateEmail, // Direct validation without _isSubmitted
                     keyboardType: TextInputType.emailAddress,
                   ),
                   SizedBox(height: 20),
@@ -153,8 +153,8 @@ class _LoginPageState extends State<LoginPage> {
                     controller: _passwordController,
                     obscureText: true, // Hide password
                     decoration: _inputDecoration("Password", Icons.lock),
-                    validator: ((value) =>
-                        _isSubmitted ? _validatePassword(value) : null),
+                    validator:
+                        _validatePassword, // Direct validation without _isSubmitted
                   ),
                   SizedBox(height: 40),
                   // Login Button

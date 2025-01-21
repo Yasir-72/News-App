@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:news_app/view/screens/bottomBar.dart';
 import 'package:news_app/view/screens/loginpage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -12,21 +11,16 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Controllers for form fields
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
-  // Validation Logic
-
-  bool _isSubmitted = false;
   bool _isLoading = false;
 
+  // Validation logic
   String? _validateName(String? value) {
     if (value == null || value.isEmpty) {
       return "Name is required";
@@ -64,60 +58,48 @@ class _RegisterPageState extends State<RegisterPage> {
     return null;
   }
 
-  Future<void> _Register() async {
-    if (_formKey.currentState!.validate()) {
+  Future<void> _register() async {
+    // Run validation
+    if (!_formKey.currentState!.validate()) {
+      return; // Stop execution if validation fails
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Firebase registration logic
+      await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      // Display success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Account created successfully"),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Navigate to the login page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
+    } catch (e) {
+      // Handle Firebase exceptions
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Registration failed: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
       setState(() {
-        _isLoading = true;
+        _isLoading = false;
       });
-      try {
-        // Attempt to create a user with Firebase Authentication
-
-        await _auth.createUserWithEmailAndPassword(
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
-
-        // Add user data to Firestore
-
-        // Display success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Account Created Successfully"),
-            backgroundColor: Colors.green, // Highlight success visually
-          ),
-        );
-
-        // Navigate to the LoginPage
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
-        );
-      } catch (e) {
-        String errorMessage =
-            "Register Failed. Please enter correct credential";
-
-        // Check specific error codes and display more specific messages
-        if (e.toString().contains('user-not-found')) {
-          errorMessage =
-              "No user found with this email. Please check your email.";
-        } else if (e.toString().contains('wrong-password')) {
-          errorMessage = "Incorrect password. Please try again.";
-        } else if (e.toString().contains('invalid-email')) {
-          errorMessage = "Invalid email format. Please enter a valid email.";
-        }
-
-        // Display a more specific error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage), // Optimized error message
-            backgroundColor: Colors.red,
-          ),
-        );
-      } finally {
-        setState(() {
-          _isLoading = false;
-        });
-      }
     }
   }
 
@@ -138,51 +120,46 @@ class _RegisterPageState extends State<RegisterPage> {
                   Text(
                     "Let's create your account",
                     style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.start,
                   ),
-
                   SizedBox(height: 40),
 
-                  // Name Field
+                  // Name field
                   TextFormField(
-                      controller: _nameController,
-                      decoration: _inputDecoration("Name", Icons.person),
-                      validator: (value) =>
-                          _isSubmitted ? _validateName(value) : null),
+                    controller: _nameController,
+                    decoration: _inputDecoration("Name", Icons.person),
+                    validator: _validateName,
+                  ),
                   SizedBox(height: 20),
 
-                  // Email Field
+                  // Email field
                   TextFormField(
-                      controller: _emailController,
-                      decoration: _inputDecoration("Email", Icons.email),
-                      validator: (value) =>
-                          _isSubmitted ? _validateEmail(value) : null),
+                    controller: _emailController,
+                    decoration: _inputDecoration("Email", Icons.email),
+                    validator: _validateEmail,
+                  ),
                   SizedBox(height: 20),
 
-                  // Password Field
+                  // Password field
                   TextFormField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      decoration: _inputDecoration("Password", Icons.lock),
-                      validator: (value) => _isSubmitted
-                          ? _validateConfirmPassword(value)
-                          : null),
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: _inputDecoration("Password", Icons.lock),
+                    validator: _validatePassword,
+                  ),
                   SizedBox(height: 20),
 
-                  // Confirm Password Field
+                  // Confirm password field
                   TextFormField(
-                      controller: _confirmPasswordController,
-                      obscureText: true,
-                      decoration: _inputDecoration(
-                          "Confirm Password", Icons.lock_reset),
-                      validator: (value) =>
-                          _isSubmitted ? _validatePassword(value) : null),
+                    controller: _confirmPasswordController,
+                    obscureText: true,
+                    decoration: _inputDecoration("Confirm Password", Icons.lock_reset),
+                    validator: _validateConfirmPassword,
+                  ),
                   SizedBox(height: 40),
 
-                  // Register Button
+                  // Register button
                   ElevatedButton(
-                    onPressed: _isLoading ? null : _Register,
-                    // onPressed: _submitForm,
+                    onPressed: _isLoading ? null : _register,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
@@ -192,7 +169,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     child: Text(
-                      _isLoading ? 'Register...' : 'Register',
+                      _isLoading ? "Registering..." : "Register",
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -201,7 +178,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   SizedBox(height: 20),
 
-                  // Sign In Option
+                  // Sign-in option
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -209,14 +186,16 @@ class _RegisterPageState extends State<RegisterPage> {
                       GestureDetector(
                         onTap: () {
                           Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => LoginPage()));
+                            context,
+                            MaterialPageRoute(builder: (context) => LoginPage()),
+                          );
                         },
                         child: Text(
                           "Sign In",
                           style: TextStyle(
-                              color: Colors.blue, fontWeight: FontWeight.bold),
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
@@ -230,7 +209,6 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  // Custom Input Decoration
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
@@ -239,7 +217,9 @@ class _RegisterPageState extends State<RegisterPage> {
       fillColor: Colors.grey[200],
       filled: true,
       border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+        borderRadius: BorderRadius.circular(30),
+        borderSide: BorderSide.none,
+      ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
         borderSide: BorderSide(color: Colors.black26, width: 2.0),
