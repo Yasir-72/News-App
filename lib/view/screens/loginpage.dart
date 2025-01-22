@@ -128,8 +128,6 @@ class _LoginPageState extends State<LoginPage> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Form(
               key: _formKey,
-              autovalidateMode: AutovalidateMode
-                  .onUserInteraction, // Automatically validate during interaction
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
