@@ -49,7 +49,7 @@ class _SavedArticlesPageState extends State<SavedArticlesPage> {
 
               return Card(
                 elevation: 10,
-                color: Colors.grey[300],
+                color: Colors.grey[100],
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 child: ListTile(
                   leading: Image.network(
