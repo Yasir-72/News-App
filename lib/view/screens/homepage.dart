@@ -24,11 +24,15 @@ class _HomePageState extends State<HomePage> {
     _initializeNewsData();
   }
 
+  /// Initialize news data with reliable API calls.
   void _initializeNewsData() {
-    // Call fetchRandomNews for both sections
+    // Instead of fetching random news (which might return empty results),
+    // we use fixed parameters:
+    // - Breaking news: general news from the US.
+    // - Recommendations: technology news from the US.
     _newsDataFuture = Future.wait([
-      _newsService.fetchRandomNews(), // For breaking news
-      _newsService.fetchRandomNews(), // For recommendations
+      _newsService.fetchBreakingNews("general", "us"), // Breaking News
+      _newsService.fetchRecommendations("technology", "us"), // Recommendations
     ]).then((results) => {
           "breakingNews": results[0],
           "recommendations": results[1],
@@ -60,8 +64,7 @@ class _HomePageState extends State<HomePage> {
                   return Center(child: Text("Error: ${snapshot.error}"));
                 } else if (snapshot.hasData) {
                   final breakingNews = snapshot.data?["breakingNews"] ?? [];
-                  final recommendations =
-                      snapshot.data?["recommendations"] ?? [];
+                  final recommendations = snapshot.data?["recommendations"] ?? [];
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,7 +92,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      drawer: AppDrawer(),
+      drawer:  AppDrawer(),
     );
   }
 
@@ -104,7 +107,7 @@ class _HomePageState extends State<HomePage> {
               Scaffold.of(context).openDrawer();
             },
           );
-        }
+        },
       ),
       actions: [
         IconButton(
@@ -134,8 +137,11 @@ class _HomePageState extends State<HomePage> {
           title,
           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
+        // Uncomment below if you want a "View All" button.
         // IconButton(
-        //     onPressed: onViewAllPressed, icon: const Icon(Icons.new_releases)),
+        //   onPressed: onViewAllPressed,
+        //   icon: const Icon(Icons.new_releases),
+        // ),
       ],
     );
   }
@@ -162,13 +168,16 @@ class _HomePageState extends State<HomePage> {
     return GestureDetector(
       onTap: () {
         Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => FullNewsPage(
-                    imageUrl: article.imageUrl,
-                    title: article.title,
-                    description: article.description,
-                    content: article.content)));
+          context,
+          MaterialPageRoute(
+            builder: (context) => FullNewsPage(
+              imageUrl: article.urlToImage,
+              title: article.title,
+              description: article.description,
+              content: article.content,
+            ),
+          ),
+        );
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 5),
@@ -182,14 +191,12 @@ class _HomePageState extends State<HomePage> {
                 width: double.infinity,
                 height: double.infinity,
                 loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) {
-                    return child; // Image has finished loading
-                  }
+                  if (loadingProgress == null) return child;
                   return Center(
                     child: CircularProgressIndicator(
                       value: loadingProgress.expectedTotalBytes != null
                           ? loadingProgress.cumulativeBytesLoaded /
-                              (loadingProgress.expectedTotalBytes ?? 1)
+                              loadingProgress.expectedTotalBytes!
                           : null,
                     ),
                   );
@@ -198,11 +205,10 @@ class _HomePageState extends State<HomePage> {
                   return Container(
                     width: double.infinity,
                     height: double.infinity,
-                    color: Colors
-                        .grey[200], // Background color for the error state
+                    color: Colors.grey[200],
                     child: const Center(
-                      child:
-                          Icon(Icons.broken_image, size: 50, color: Colors.red),
+                      child: Icon(Icons.broken_image,
+                          size: 50, color: Colors.red),
                     ),
                   );
                 },
@@ -228,24 +234,26 @@ class _HomePageState extends State<HomePage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.8),
-              borderRadius: BorderRadius.circular(8)),
+            color: Colors.blue.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: Text(
             article.sourceName,
             style: const TextStyle(
-                color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold),
           ),
         ),
         const SizedBox(height: 8),
         Text(
           article.description,
           style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              shadows: [
-                Shadow(color: Colors.black, blurRadius: 4),
-              ]),
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            shadows: [Shadow(color: Colors.black, blurRadius: 4)],
+          ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
@@ -301,11 +309,8 @@ class _HomePageState extends State<HomePage> {
                           height: 100,
                           color: Colors.grey[200],
                           child: const Center(
-                            child: Icon(
-                              Icons.broken_image,
-                              size: 50,
-                              color: Colors.grey,
-                            ),
+                            child: Icon(Icons.broken_image,
+                                size: 50, color: Colors.grey),
                           ),
                         );
                       },
@@ -315,11 +320,8 @@ class _HomePageState extends State<HomePage> {
                       height: 100,
                       color: Colors.grey[200],
                       child: const Center(
-                        child: Icon(
-                          Icons.broken_image,
-                          size: 50,
-                          color: Colors.grey,
-                        ),
+                        child: Icon(Icons.broken_image,
+                            size: 50, color: Colors.grey),
                       ),
                     ),
             ),
@@ -361,8 +363,8 @@ class _HomePageState extends State<HomePage> {
                           article.author.isNotEmpty
                               ? article.author
                               : "Unknown",
-                          style:
-                              const TextStyle(fontSize: 12, color: Colors.grey),
+                          style: const TextStyle(
+                              fontSize: 12, color: Colors.grey),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2,
                         ),
@@ -371,8 +373,8 @@ class _HomePageState extends State<HomePage> {
                       Expanded(
                         child: Text(
                           article.publishedAt?.toString() ?? "N/A",
-                          style:
-                              const TextStyle(fontSize: 12, color: Colors.grey),
+                          style: const TextStyle(
+                              fontSize: 12, color: Colors.grey),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         ),

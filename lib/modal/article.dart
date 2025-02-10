@@ -13,8 +13,8 @@ class Article extends HiveObject {
   @HiveField(2)
   final String description;
 
-  @HiveField(3)
-  final String content;
+    @HiveField(3)
+    final String content;
 
   Article({
     required this.imageUrl,

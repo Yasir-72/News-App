@@ -22,18 +22,22 @@ class _ExplorePageState extends State<ExplorePage> {
     _fetchRandomNews();
   }
 
+  /// Fetch random news articles.
   void _fetchRandomNews() {
     setState(() {
       _newsFuture = _newsService.fetchRandomNews();
     });
   }
 
+  /// Refresh the data by fetching random news.
   Future<void> _refreshData() async {
     setState(() {
       _fetchRandomNews();
     });
   }
 
+  /// Search for news articles.
+  /// If the query is empty, random news is fetched.
   void _searchNews(String query) {
     setState(() {
       _newsFuture = query.isNotEmpty
@@ -42,17 +46,29 @@ class _ExplorePageState extends State<ExplorePage> {
     });
   }
 
+  /// When a category chip is clicked, update the selected category and fetch
+  /// news for that category. If the category is "all" or no articles are found,
+  /// fall back to random news.
   void _onCategoryChipClick(String category) {
     setState(() {
       _selectedCategory = category;
-      // Fetch news based on selected category or all if 'all' is selected
-      _newsFuture = category == "all"
-          ? _newsService.fetchRandomNews() // Show all categories
-          : _newsService
-              .fetchNewsWithCategory(category); // Show selected category news
+      if (category == "all") {
+        _newsFuture = _newsService.fetchRandomNews();
+      } else {
+        _newsFuture =
+            _newsService.fetchNewsWithCategory(category).then((articles) {
+          // If no articles are returned for the selected category,
+          // fallback to random news.
+          if (articles.isEmpty) {
+            return _newsService.fetchRandomNews();
+          }
+          return articles;
+        });
+      }
     });
   }
 
+  /// Build a horizontal list of category chips.
   Widget _buildCategoryChips() {
     List<String> categories = [
       "all",
@@ -70,22 +86,21 @@ class _ExplorePageState extends State<ExplorePage> {
       child: Row(
         children: categories.map((category) {
           return GestureDetector(
-            onTap: () {
-              _onCategoryChipClick(category); // Update the category
-            },
+            onTap: () => _onCategoryChipClick(category),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
               child: Chip(
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
+                  borderRadius: BorderRadius.circular(20),
+                ),
                 label: Text(category == "all" ? "All Categories" : category),
                 backgroundColor: _selectedCategory == category
                     ? Colors.blue
-                    : Colors.grey[300], // Highlight 'All Categories' in blue
+                    : Colors.grey[300],
                 labelStyle: TextStyle(
                   color: _selectedCategory == category
                       ? Colors.white
-                      : Colors.black, // Text color changes based on selection
+                      : Colors.black,
                 ),
               ),
             ),
@@ -95,39 +110,7 @@ class _ExplorePageState extends State<ExplorePage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      // appBar: _buildAppBar(),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _refreshData,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 16),
-                _buildSearchBar(),
-                const SizedBox(height: 16),
-                Expanded(child: _buildNewsList()),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  AppBar _buildAppBar() {
-    return AppBar(
-      elevation: 0,
-      backgroundColor: Colors.white,
-      iconTheme: const IconThemeData(color: Colors.black),
-    );
-  }
-
+  /// Build the header section with title, subtitle, and category chips.
   Widget _buildHeader() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,15 +126,22 @@ class _ExplorePageState extends State<ExplorePage> {
           style: TextStyle(fontSize: 16, color: Colors.grey),
         ),
         const SizedBox(height: 16),
-        _buildCategoryChips(), // This will display the category chips
+        _buildCategoryChips(),
       ],
     );
   }
 
+  /// Build the search bar with a clear button.
   Widget _buildSearchBar() {
     return TextField(
       controller: _searchController,
       onSubmitted: _searchNews,
+      onChanged: (value) {
+        // When the search text is cleared, show random news.
+        if (value.isEmpty) {
+          _searchNews('');
+        }
+      },
       decoration: InputDecoration(
         hintText: "Search",
         prefixIcon: const Icon(Icons.search),
@@ -174,6 +164,7 @@ class _ExplorePageState extends State<ExplorePage> {
     );
   }
 
+  /// Build the list of news articles using a FutureBuilder.
   Widget _buildNewsList() {
     return FutureBuilder<List<NewsArticle>>(
       future: _newsFuture,
@@ -209,17 +200,21 @@ class _ExplorePageState extends State<ExplorePage> {
     );
   }
 
+  /// Build an individual news article item.
   Widget _buildArticleItem(NewsArticle article) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => FullNewsPage(
-                    imageUrl: article.imageUrl,
-                    title: article.title,
-                    description: article.description,
-                    content: article.content)));
+          context,
+          MaterialPageRoute(
+            builder: (context) => FullNewsPage(
+              imageUrl: article.imageUrl,
+              title: article.title,
+              description: article.description,
+              content: article.content,
+            ),
+          ),
+        );
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -227,9 +222,9 @@ class _ExplorePageState extends State<ExplorePage> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: article.urlToImage.isNotEmpty
+              child: article.imageUrl.isNotEmpty
                   ? Image.network(
-                      article.urlToImage,
+                      article.imageUrl,
                       width: 150,
                       height: 100,
                       fit: BoxFit.cover,
@@ -237,8 +232,7 @@ class _ExplorePageState extends State<ExplorePage> {
                         return Container(
                           width: 150,
                           height: 100,
-                          color:
-                              Colors.grey[200], // Placeholder background color
+                          color: Colors.grey[200],
                           child: const Center(
                             child: Icon(
                               Icons.broken_image,
@@ -252,7 +246,7 @@ class _ExplorePageState extends State<ExplorePage> {
                   : Container(
                       width: 150,
                       height: 100,
-                      color: Colors.grey[200], // Placeholder background color
+                      color: Colors.grey[200],
                       child: const Center(
                         child: Icon(
                           Icons.broken_image,
@@ -297,7 +291,7 @@ class _ExplorePageState extends State<ExplorePage> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          article.author.isNotEmpty == true
+                          article.author.isNotEmpty
                               ? article.author
                               : "Unknown",
                           style:
@@ -322,6 +316,37 @@ class _ExplorePageState extends State<ExplorePage> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Build the overall UI layout.
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      // Uncomment the following lines if you want to use an AppBar.
+      // appBar: AppBar(
+      //   elevation: 0,
+      //   backgroundColor: Colors.white,
+      //   iconTheme: const IconThemeData(color: Colors.black),
+      // ),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: _refreshData,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 16),
+                _buildSearchBar(),
+                const SizedBox(height: 16),
+                Expanded(child: _buildNewsList()),
+              ],
+            ),
+          ),
         ),
       ),
     );
