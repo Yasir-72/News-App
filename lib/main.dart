@@ -20,8 +20,21 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Weather Hub',
-      theme: ThemeData(
-        useMaterial3: true,
+      theme: ThemeData.light().copyWith(
+        primaryColor: Colors.white, // Header background color
+        scaffoldBackgroundColor: Colors.white,
+        dialogBackgroundColor: Colors.white,
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.white, // Button text color
+          ),
+        ),
+        colorScheme: ColorScheme.light(
+          primary: Colors.white, // **Header background color**
+          onPrimary: Colors.white, // **Header text color**
+          surface: Colors.white,
+          onSurface: Colors.black,
+        ),
       ),
       home: const LoginPage(),
     );
