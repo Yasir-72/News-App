@@ -32,12 +32,12 @@ class NewsService {
             .map((article) => NewsArticle.fromJson(article))
             .toList();
       } else {
-        throw Exception(
+        throw (
             'Error: ${response.statusCode} - ${response.reasonPhrase}');
       }
     } catch (error) {
       print('Error: $error');
-      throw Exception('An error occurred while fetching news: $error');
+      throw ('Something is Wrong: $error');
     }
   }
 

@@ -31,8 +31,8 @@ class _HomePageState extends State<HomePage> {
     // - Breaking news: general news from the US.
     // - Recommendations: technology news from the US.
     _newsDataFuture = Future.wait([
-      _newsService.fetchBreakingNews("general", "us"), // Breaking News
-      _newsService.fetchRecommendations("technology", "us"), // Recommendations
+      _newsService.fetchBreakingNews("general", "us"), 
+      _newsService.fetchRecommendations("technology", "us"), 
     ]).then((results) => {
           "breakingNews": results[0],
           "recommendations": results[1],
@@ -61,10 +61,15 @@ class _HomePageState extends State<HomePage> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return Center(child: Text("Error: ${snapshot.error}"));
+                  return Center(
+                      child: Text(
+                    "Error: ${snapshot.error}",
+                    style: TextStyle(color: Colors.red),
+                  ));
                 } else if (snapshot.hasData) {
                   final breakingNews = snapshot.data?["breakingNews"] ?? [];
-                  final recommendations = snapshot.data?["recommendations"] ?? [];
+                  final recommendations =
+                      snapshot.data?["recommendations"] ?? [];
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +97,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      drawer:  AppDrawer(),
+      drawer: AppDrawer(),
     );
   }
 
@@ -116,10 +121,6 @@ class _HomePageState extends State<HomePage> {
             context,
             MaterialPageRoute(builder: (context) => const ExplorePage()),
           ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.notifications_active, size: 35),
-          onPressed: () {},
         ),
       ],
     );
@@ -207,8 +208,8 @@ class _HomePageState extends State<HomePage> {
                     height: double.infinity,
                     color: Colors.grey[200],
                     child: const Center(
-                      child: Icon(Icons.broken_image,
-                          size: 50, color: Colors.red),
+                      child:
+                          Icon(Icons.broken_image, size: 50, color: Colors.red),
                     ),
                   );
                 },
@@ -240,9 +241,7 @@ class _HomePageState extends State<HomePage> {
           child: Text(
             article.sourceName,
             style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold),
+                color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
           ),
         ),
         const SizedBox(height: 8),
@@ -363,8 +362,8 @@ class _HomePageState extends State<HomePage> {
                           article.author.isNotEmpty
                               ? article.author
                               : "Unknown",
-                          style: const TextStyle(
-                              fontSize: 12, color: Colors.grey),
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2,
                         ),
@@ -373,8 +372,8 @@ class _HomePageState extends State<HomePage> {
                       Expanded(
                         child: Text(
                           article.publishedAt?.toString() ?? "N/A",
-                          style: const TextStyle(
-                              fontSize: 12, color: Colors.grey),
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         ),
